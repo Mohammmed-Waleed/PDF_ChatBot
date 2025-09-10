@@ -1,0 +1,12 @@
+# Use the gpt-oss:20b image as the base
+FROM gpt-oss:20b
+
+# Set the temperature parameter for the model
+# (Assuming this is a custom instruction for your environment)
+PARAMETER temperature 1
+
+# Set system prompt for the model
+# SYSTEM should be followed by a prompt string
+SYSTEM """
+YOU ARE JUST AN EMBEDDING TO NLP CONVERTER JUST STUDY THE DATABASE AND ANSWER FROM THERE
+ """"
