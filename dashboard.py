@@ -1,38 +1,54 @@
 import streamlit as st
-import os
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_ollama.llms import OllamaLLM
-from langchain_community.vectorstores import Chroma
-from langchain.embeddings import OllamaEmbeddings
-
-def _build_chroma_from_pdfs(pdf_folder):
-    pdf_files = [f for f in os.listdir(pdf_folder) if f.lower().endswith('.pdf')]
-    all_docs = []
-    for pdf_file in pdf_files:
-        loader = PyPDFLoader(os.path.join(pdf_folder, pdf_file))
-        docs = loader.load()
-        all_docs.extend(docs)
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=150)
-    splits = splitter.split_documents(all_docs)
-
-    # Using llama3.3 as the embedding model
-    embeddings = OllamaEmbeddings(model="nomic-embed-text")
-
-    return Chroma.from_documents(splits, embeddings)
+from llm_handler import build_chroma_from_uploaded_pdfs
 
 def pdf_folder_indexer():
-    st.header("PDF Folder Indexer")
-    pdf_folder = os.path.dirname(__file__)
-    pdf_files = [f for f in os.listdir(pdf_folder) if f.lower().endswith('.pdf')]
-    if not pdf_files:
-        st.warning("No PDF files found in the folder.")
-        return
-    st.write(f"Found {len(pdf_files)} PDF(s): {', '.join(pdf_files)}")
-    with st.spinner("Indexing PDFs..."):
-        chroma_index = _build_chroma_from_pdfs(pdf_folder)
-        st.session_state.chroma_index = chroma_index
-        st.success("✅ ChromaDB index ready. You can ask questions below.")
+    st.subheader("Step 1: Upload PDF Files to Index")
+
+    uploaded_files = st.file_uploader(
+        "Upload one or more PDF files",
+        type=["pdf"],
+        accept_multiple_files=True
+    )
+
+    if uploaded_files:
+        with st.spinner("Indexing PDFs..."):
+            chroma_index = build_chroma_from_uploaded_pdfs(uploaded_files)
+            st.session_state.chroma_index = chroma_index
+            st.success("✅ ChromaDB index is ready. You can now ask questions.")
+    else:
+        st.info("Please upload PDF files to proceed.")
+
 
 def chatbot():
-    st.info("Use the Q&A box below. Answers come only from your documents.")
+    st.subheader("Step 2: Ask Questions")
+
+    if "qa_chain" not in st.session_state:
+        st.warning("Please index PDFs first using the upload section above.")
+        return
+
+    qa_chain = st.session_state.qa_chain
+
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
+
+    # Form ensures input is cleared on submit
+    with st.form("qa_form", clear_on_submit=True):
+        question = st.text_input("Enter your question about your PDFs:")
+        submitted = st.form_submit_button("Ask")
+
+        if submitted and question:
+            with st.spinner("Generating answer..."):
+                result = qa_chain({"query": question})
+                answer = result.get("result", "No answer found.")
+                st.session_state.chat_history.append({
+                    "question": question,
+                    "answer": answer
+                })
+
+    # Display chat history
+    if st.session_state.chat_history:
+        st.subheader("💬 Chat History")
+        for chat in reversed(st.session_state.chat_history[-5:]):  # Show last 5 messages
+            with st.expander(f"Q: {chat['question'][:50]}..."):
+                st.write("**Question:**", chat["question"])
+                st.write("**Answer:**", chat["answer"])
