@@ -1,0 +1,57 @@
+# --- Python cache ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Virtual environments ---
+.venv/
+venv/
+ENV/
+env/
+
+# --- Distribution / packaging ---
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# --- Logs & databases ---
+*.log
+*.sqlite3
+*.db
+[Dd]ata[Bb]ase/
+   # ignore your database folder
+
+# --- Testing & coverage ---
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# --- Jupyter Notebook ---
+.ipynb_checkpoints
+
+# --- Streamlit ---
+.streamlit/secrets.toml
+
+# --- IDEs / Editors ---
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# --- OS files ---
+.DS_Store
+Thumbs.db
+
+delete
+stop
